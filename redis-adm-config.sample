@@ -1,9 +1,14 @@
 {
     "listen": "0.0.0.0:5000",
-
-    "ser1": {
-        "addr": '127.0.0.1:6379',
-        "password": '',
-        "db": 0
-    }
+    "redis": [{
+        "alias": "default",
+        "addr": "127.0.0.1:6379",
+        "password": "",
+        "db": "0"
+    },{
+        "alias": "default2",
+        "addr": "172.17.6.29:4013",
+        "password": "",
+        "db": "0"
+    }]
 }
