@@ -26,7 +26,10 @@ a:hover {
 
 #show {
     margin-top: 10px;
+    margin-bottom: 10px;
+    width: 100%;
     background:#f0efef;
+    float: left;
 }
 #show #show-title{
     padding-left: 5px;
@@ -39,10 +42,10 @@ tr {
     vertical-align: inherit;
     border-color: inherit;
 }
-tr.tr-0 {
+tr:nth-of-type(odd) {
     background: #eeeeee;
 }
-tr.tr-1 {
+tr:nth-of-type(even) {
     background: #f0efe0;
 }
 td {

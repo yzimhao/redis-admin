@@ -15,76 +15,84 @@
   <div id="logo">RedisAdmin</div>
   <div id="describe">基于 Golang & JQuery 的 Redis 管理监控工具</div>
 
-  <div id="show">
-    <div id="show-title"><em>default</em></div>
-    <div class="left">
+    <!-- <script id="tpl-info" type="text/x-handlebars-template"> -->
+    <div id="show" class="redis" v-for="(val, key, i) in redis">
+        <div id="show-title"><em>{{i+1}}. {{val.addr}}</em></div>
+        <div class="left">
         <table cellspacing="0">
-            <tbody>
-                <tr class="tr-0">
-                    <td class="td-0">redis_version</td>
-                    <td>3.0.7</td>
-                </tr>
-                <tr class="tr-1">
-                    <td class="td-0">os</td>
-                    <td>Linux 4.9.10-100.fc24.x86_64 x86_64</td>
-                </tr>
-                <tr class="tr-0">
-                    <td class="td-0">process_id</td>
-                    <td>20830</td>
-                </tr>
-                <tr class="tr-1">
-                    <td class="td-0">tcp_port</td>
-                    <td>6379</td>
-                </tr>
-                <tr class="tr-0">
-                    <td class="td-0">uptime_in_days</td>
-                    <td>1</td>
-                </tr>
-                <tr class="tr-1">
-                    <td class="td-0">config_file</td>
-                    <td>/etc/redis/redis.conf</td>
-                </tr>
-                <tr class="tr-0">
-                    <td class="td-0">connected_clients</td>
-                    <td>1</td>
-                </tr>
-                <tr class="tr-1">
-                    <td class="td-0">used_memory_human</td>
-                    <td>796.77K</td>
-                </tr>
-                <tr class="tr-0">
-                    <td class="td-0">expired_keys</td>
-                    <td>0</td>
-                </tr>
-                <tr class="tr-1">
-                    <td class="td-0">keyspace_hits</td>
-                    <td>0</td>
-                </tr>
-                <tr class="tr-0">
-                    <td class="td-0">keyspace_misses</td>
-                    <td>0</td>
-                </tr>
-                <tr class="tr-1">
-                    <td class="td-0">used_cpu_sys</td>
-                    <td>42.57</td>
-                </tr>
-                <tr class="tr-0">
-                    <td class="td-0">used_cpu_user:</td>
-                    <td>14.47</td>
-                </tr>
-            </tbody>
+        <tbody>
+            <tr class="tr-0">
+                <td class="td-0">redis_version</td>
+                <td width="150">{{val.redis_version}}</td>
+            </tr>
+            <tr class="tr-1">
+                <td class="td-0">os</td>
+                <td>{{val.os}}</td>
+            </tr>
+            <tr>
+                <td class="td-0">process_id</td>
+                <td>{{val.process_id}}</td>
+            </tr>
+            <tr>
+                <td class="td-0">tcp_port</td>
+                <td>{{val.tcp_port}}</td>
+            </tr>
+            <tr>
+                <td class="td-0">uptime_in_seconds</td>
+                <td>{{val.uptime_in_seconds}}</td>
+            </tr>
+            <tr>
+                <td class="td-0">uptime_in_days</td>
+                <td>{{val.uptime_in_days}}天</td>
+            </tr>
+            <tr>
+                <td class="td-0">config_file</td>
+                <td>{{val.config_file}}</td>
+            </tr>
+            <tr>
+                <td class="td-0">connected_clients</td>
+                <td>{{val.connected_clients}}</td>
+            </tr>
+            <tr>
+                <td class="td-0">used_memory_human</td>
+                <td>{{val.used_memory_human}}</td>
+            </tr>
+            <tr>
+                <td class="td-0">expired_keys</td>
+                <td>{{val.expired_keys}}</td>
+            </tr>
+            <tr>
+                <td class="td-0">keyspace_hits</td>
+                <td>{{val.keyspace_hits}}</td>
+            </tr>
+            <tr>
+                <td class="td-0">keyspace_misses</td>
+                <td>{{val.keyspace_misses}}</td>
+            </tr>
+            <tr>
+                <td class="td-0">used_cpu_sys</td>
+                <td>{{val.used_cpu_sys}}</td>
+            </tr>
+            <tr>
+                <td class="td-0">used_cpu_user</td>
+                <td>{{val.used_cpu_user}}</td>
+            </tr>
+        </tbody>
         </table>
-    </div>
-    <div class="right">
-        <div>
-            <div id="hits" class="myecharts" style="width:200px; height:200px;"></div>
+        </div>
+        <div class="right">
+            <div>
+                <div :class="val.id" class="myecharts" style="width:200px; height:322px;"></div>
+            </div>
         </div>
     </div>
-  </div>
-
+    <!-- </script> -->
 </div>
+
+
 <div id="foot"></div>
-<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+<script src="static/zepto.min.js"></script>
+<script src="static/vue.min.js"></script>
 <script src="static/echarts.min.js"></script>
 <script>
 (function(w){
@@ -129,18 +137,68 @@
         ]
     };
 
-    var ec = document.getElementById('hits');
-    var myechart = echarts.init(ec);
-    myechart.setOption(option, true);
 
-    myechart.setOption({
-        series: [{
-            data: [
-                {name: "命中", value: 1000},
-                {name: "未命中", value: 10}
-            ]
-        }]
+    Vue.config.devtools = true;
+    var VM = new Vue({
+        el: "#container",
+        data: {
+            redis: {}
+        }
     });
-})(window)</script>
+    var EC = {};
+
+    function load(addr, pwd){
+        var url = "/get/info?addr="+addr+"&password="+pwd+"&callback=?";
+        $.getJSON(url, function(d){
+            // flush data
+            Vue.set(VM.redis, d.id, d);
+
+            var ec = {};
+            if(EC[d.id] && EC[d.id].init_echart){
+                ec = EC[d.id];
+            }else{
+                setTimeout(function(){
+                    ec = {
+                        obj: $("."+d.id)[0],
+                        objechar: null,
+                        init_echart: true
+                    };
+                    ec.objechar = echarts.init(ec.obj);
+                    ec.objechar.setOption(option, true);
+                    EC[d.id] = ec;
+
+                    ec.objechar.setOption({
+                        series: [{
+                            data: [
+                                {name: "命中", value: d.keyspace_hits},
+                                {name: "未命中", value: d.keyspace_misses}
+                            ]
+                        }]
+                    });
+
+                }, 16);
+            }
+
+        })
+    }
+
+
+
+
+
+    function init(){
+        load("127.0.0.1:6379");
+        load("172.17.6.29:4013");
+    }
+    init();
+
+    setInterval(function(){
+        init();
+    }, 5e3)
+
+
+
+})(window)
+</script>
 </body>
 </html>
